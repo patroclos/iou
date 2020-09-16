@@ -14,6 +14,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\IOU.Core\IOU.Core.csproj" />
+      <ProjectReference Include="..\IOU.Peer\IOU.Peer.csproj" />
     </ItemGroup>
 
     <ItemGroup>

@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOU.Core", "IOU.Core\IOU.Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOU.Tests", "IOU.Tests\IOU.Tests.csproj", "{4AF31F50-5ECA-46C3-9343-9AB1DCB10C86}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IOU.Peer", "IOU.Peer\IOU.Peer.csproj", "{596E72BB-52CB-431D-9266-4A72165108CB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,5 +46,17 @@ Global
 		{4AF31F50-5ECA-46C3-9343-9AB1DCB10C86}.Release|x64.Build.0 = Release|Any CPU
 		{4AF31F50-5ECA-46C3-9343-9AB1DCB10C86}.Release|x86.ActiveCfg = Release|Any CPU
 		{4AF31F50-5ECA-46C3-9343-9AB1DCB10C86}.Release|x86.Build.0 = Release|Any CPU
+		{596E72BB-52CB-431D-9266-4A72165108CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{596E72BB-52CB-431D-9266-4A72165108CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{596E72BB-52CB-431D-9266-4A72165108CB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{596E72BB-52CB-431D-9266-4A72165108CB}.Debug|x64.Build.0 = Debug|Any CPU
+		{596E72BB-52CB-431D-9266-4A72165108CB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{596E72BB-52CB-431D-9266-4A72165108CB}.Debug|x86.Build.0 = Debug|Any CPU
+		{596E72BB-52CB-431D-9266-4A72165108CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{596E72BB-52CB-431D-9266-4A72165108CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{596E72BB-52CB-431D-9266-4A72165108CB}.Release|x64.ActiveCfg = Release|Any CPU
+		{596E72BB-52CB-431D-9266-4A72165108CB}.Release|x64.Build.0 = Release|Any CPU
+		{596E72BB-52CB-431D-9266-4A72165108CB}.Release|x86.ActiveCfg = Release|Any CPU
+		{596E72BB-52CB-431D-9266-4A72165108CB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
