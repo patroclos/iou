@@ -53,10 +53,10 @@ namespace IOU
             var pairs = new List<KeyValuePair<BStr, BEnc>>();
             while (true)
             {
-                if (!BStr.TryParse(buffer.Slice(consumed), out var str, out var bcK))
+                if (!BStr.TryParse(buffer.Slice(consumed), out var str, out var bcK) || str == null)
                     break;
                 consumed += bcK;
-                if (!BEnc.TryParseExpr(buffer.Slice(consumed), out var val, out var bcV))
+                if (!BEnc.TryParseExpr(buffer.Slice(consumed), out var val, out var bcV) || val == null)
                     return false;
                 consumed += bcV;
                 pairs.Add(new KeyValuePair<BStr, BEnc>(str, val));

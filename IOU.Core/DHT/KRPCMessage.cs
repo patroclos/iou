@@ -15,7 +15,6 @@ namespace IOU.DHT
     {
         [MetaInfoProperty("t")]
         public BStr TransactionId { get; set; }
-        
         public abstract KRPCMessageType MessageType { get; }
 
         [MetaInfoProperty("y")]
@@ -55,7 +54,6 @@ namespace IOU.DHT
     public class KRPCResponse : KRPCMessage
     {
         public override KRPCMessageType MessageType => KRPCMessageType.Response;
-        
         [MetaInfoProperty("r")]
         public BDict Response { get; set; }
     }
@@ -63,7 +61,6 @@ namespace IOU.DHT
     public class KRPCError : KRPCMessage
     {
         public override KRPCMessageType MessageType => KRPCMessageType.Error;
-        
         [MetaInfoProperty("e")]
         public BLst Error { get; set; }
     }
@@ -87,7 +84,7 @@ namespace IOU.DHT
             KRPCMessage ToDto(QueryContext ctx);
         }
 
-        public class Ping : IQuery
+        public struct Ping : IQuery
         {
             [MetaInfoProperty("id")]
             public BStr Id { get; set; }
@@ -104,7 +101,7 @@ namespace IOU.DHT
             }
         }
 
-        public class FindNode
+        public struct FindNode
         {
             [DataMember(Name = "id")] public BStr Id;
             [DataMember(Name = "target")] public BStr Target;

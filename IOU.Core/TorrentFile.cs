@@ -49,13 +49,13 @@ namespace IOU
         }
     }
 
-    public class FileSpan
+    public struct FileSpan
     {
         public TorrentFile File;
         public Memory<byte> Content;
     }
 
-    public class TorrentInfo
+    public struct TorrentInfo
     {
         public BDict Encoded;
 
