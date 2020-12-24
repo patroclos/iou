@@ -96,7 +96,7 @@ namespace IOU
                             return str.Utf8String;
                         if (type == typeof(byte[]))
                             return str.Value.ToArray();
-                        if (type == typeof(ReadOnlyMemory<byte[]>))
+                        if (type == typeof(ReadOnlyMemory<byte>))
                             return str.Value;
                         throw new InvalidOperationException($"Can't deserialize a {encoded.Type} to {type}");
                     }
