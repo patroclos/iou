@@ -7,7 +7,14 @@ namespace IOU
     public class TorrentFile
     {
         public BInt Length { get; private set; }
+
         public BStr[] Path { get; private set; }
+
+        public TorrentFile(BInt length, BStr[] path)
+        {
+            Length = length;
+            Path = path;
+        }
 
         public static bool TryParseInfo(BEnc enc, out TorrentFile? file)
         {
@@ -31,11 +38,7 @@ namespace IOU
 
             var elems = pl.Value.OfType<BStr>().ToArray();
 
-            file = new TorrentFile
-            {
-                Length = lenI,
-                Path = elems
-            };
+            file = new TorrentFile(lenI, elems);
             
             return true;
         }

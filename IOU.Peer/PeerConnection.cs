@@ -41,7 +41,7 @@ namespace IOU.Peer
             return new PeerConnection(endpoint, client);
         }
 
-        public async Task DoHandshake()
+        public Task DoHandshake()
         {
             throw new NotImplementedException();
         }

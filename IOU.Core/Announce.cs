@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using BinaryEncoding;
 
 
@@ -63,7 +62,7 @@ namespace IOU
             foreach(var ep in announceResponse.Endpoints)
                 Console.WriteLine($"Announce Con: {ep}");
 
-            return null;
+            return announceResponse.Endpoints.ToArray();
         }
 
         private byte[] BuildConnectionRequest(int transactionId)

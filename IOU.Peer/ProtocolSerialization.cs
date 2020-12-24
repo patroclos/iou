@@ -60,19 +60,14 @@ namespace IOU.Peer
                 }
                 case 5:
                     throw new NotImplementedException("Bitfield");
-                    break;
                 case 6:
                     throw new NotImplementedException("Request");
-                    break;
                 case 7:
                     throw new NotImplementedException("Piece");
-                    break;
                 case 8:
                     throw new NotImplementedException("Cancel");
-                    break;
                 case 20:
                     throw new NotImplementedException("Extension Message");
-                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(type), $"Invalid Peer Message type {type}");
             }

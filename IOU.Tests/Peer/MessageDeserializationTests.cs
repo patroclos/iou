@@ -1,5 +1,4 @@
 using System.Buffers;
-using System.Net.Sockets;
 using IOU.Peer;
 using NUnit.Framework;
 
