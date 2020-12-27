@@ -29,6 +29,10 @@ namespace IOU
                     return enc;
                 case string s:
                     return new BStr(s);
+                case byte[] buf:
+                    return new BStr(buf);
+                case ReadOnlyMemory<byte> buf:
+                    return new BStr(buf.ToArray());
                 case int i:
                     return new BInt(i);
                 case long i:
@@ -38,12 +42,12 @@ namespace IOU
                         .Zip(d.Values.Cast<object>(), (k, v) =>
                         {
                             var key = Serialize(k) as BStr;
-                            if(key == null)
-                              throw new InvalidOperationException();
+                            if (key == null)
+                                throw new InvalidOperationException();
 
                             var val = Serialize(v);
-                            if(val == null)
-                              throw new InvalidOperationException();
+                            if (val == null)
+                                throw new InvalidOperationException();
 
                             return new KeyValuePair<BStr, BEnc>(key, val);
                         })
@@ -67,12 +71,12 @@ namespace IOU
                         {
                             var attr = p.GetCustomAttribute(typeof(MetaInfoPropertyAttribute)) as MetaInfoPropertyAttribute;
                             var val = p.GetValue(content);
-                            if (val == null || attr == null)
+                            if (val == null)
                                 continue;
                             var enc = Serialize(val);
                             if (enc == null)
                                 continue;
-                            dict.Add(attr.Name ?? p.Name, enc);
+                            dict.Add(attr?.Name ?? p.Name, enc);
 
                         }
 
@@ -104,14 +108,27 @@ namespace IOU
                     if (type == typeof(int))
                         return bint.IntValue;
 
+                    if (type == typeof(int?))
+                        return bint.IntValue;
+
                     if (type == typeof(uint))
                         return (uint)bint.Value;
+
+                    if (type == typeof(uint?))
+                        return (uint?)bint.Value;
 
                     if (type == typeof(long))
                         return bint.Value;
 
+                    if (type == typeof(long?))
+                        return bint.Value;
+
                     if (type == typeof(ulong))
                         return (ulong)bint.Value;
+
+                    if (type == typeof(ulong?))
+                        return (ulong?)bint.Value;
+
                     throw new InvalidOperationException($"Can't deserialize a {encoded.Type} to {type}");
                 case BLst lst:
                     if (type.IsArray)

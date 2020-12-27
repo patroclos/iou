@@ -9,11 +9,11 @@ namespace IOU.Peer
     {
         public struct ParsedMessage
         {
-            public ProtocolMessage Message { get; set; }
+            public IProtocolMessage Message { get; set; }
             public SequencePosition Position { get; set; }
         }
         
-        public static void WriteMessage(ProtocolMessage message, BinaryWriter writer)
+        public static void WriteMessage(IProtocolMessage message, BinaryWriter writer)
         {
             throw new NotImplementedException();
         }
@@ -34,9 +34,12 @@ namespace IOU.Peer
                     Position = buf.GetPosition(off)
                 };
 
+            if(len + off > buf.Length)
+                return null;
+
             var type = buf.Slice(off++, 1).FirstSpan[0];
 
-            var parsed = null as ProtocolMessage;
+            IProtocolMessage? parsed = null;
             switch (type)
             {
                 case 0:

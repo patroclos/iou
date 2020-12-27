@@ -2,69 +2,63 @@ using System.IO;
 
 namespace IOU.Peer
 {
-    public abstract class ProtocolMessage
+    // TODO: should all these message definitions be interfaces instead?
+    public interface IProtocolMessage
     {
     }
 
-    public class Handshake : ProtocolMessage
-    {
-        public byte[] InfoHash;
-        public byte[] PeerId;
-        public byte[] Reserved;
-    }
-
-    public class KeepAlive : ProtocolMessage
+    public class KeepAlive : IProtocolMessage
     {
     }
 
-    public class Choke : ProtocolMessage
+    public class Choke : IProtocolMessage
     {
     }
 
-    public class Unchoke : ProtocolMessage
+    public class Unchoke : IProtocolMessage
     {
     }
 
-    public class Interested : ProtocolMessage
+    public class Interested : IProtocolMessage
     {
     }
 
-    public class NotInterested : ProtocolMessage
+    public class NotInterested : IProtocolMessage
     {
     }
 
-    public class Have : ProtocolMessage
+    public class Have : IProtocolMessage
     {
         public uint PieceIndex;
     }
 
-    public class Bitfield : ProtocolMessage
+    public class Bitfield : IProtocolMessage
     {
         public byte[] Bits;
     }
 
-    public class Request : ProtocolMessage
+    public class Request : IProtocolMessage
     {
         public uint PieceIndex;
         public uint Begin;
         public uint Length;
     }
 
-    public class Piece : ProtocolMessage
+    public class Piece : IProtocolMessage
     {
         public uint PieceIndex;
         public uint Begin;
         public byte[] Content;
     }
 
-    public class Cancel : ProtocolMessage
+    public class Cancel : IProtocolMessage
     {
         public uint PieceIndex;
         public uint Begin;
         public uint Length;
     }
 
-    public abstract class Extended : ProtocolMessage
+    public abstract class Extended : IProtocolMessage
     {
         public string ExtensionName { get; }
         public abstract void WriteTo(BinaryWriter writer);

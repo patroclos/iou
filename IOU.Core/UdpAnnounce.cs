@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -11,16 +12,45 @@ using BinaryEncoding;
 
 namespace IOU
 {
-    public class Announce
+    public class UdpAnnounce
     {
         private readonly IPEndPoint EndPoint;
         private readonly UdpClient _client;
+        private readonly byte[] _peerId;
 
-        public Announce(IPEndPoint endPoint)
+        public UdpAnnounce(IPEndPoint endPoint, byte[] peerId)
         {
+            Debug.Assert(peerId.Length == 20, $"{nameof(peerId)}.Length == 20");
+
             EndPoint = endPoint;
+            _peerId = peerId;
             _client = new UdpClient();
             _client.Connect(EndPoint);
+        }
+
+        public async Task<IEnumerable<IPEndPoint>> AnnounceAsync(byte[] infoHash)
+        {
+            var conreq = BuildConnectionRequest(0);
+            await _client.SendAsync(conreq, conreq.Length);
+
+            var response = await ReceiveTimeoutAsync(TimeSpan.FromSeconds(3));
+            var resp = ReadConnectionResponse(response.Buffer);
+
+            // TODO: this is garbage, maybe use a struct or builder pattern?
+            var announceReq = BuildAnnounceRequest(
+                    resp.ConnectionId,
+                    resp.TransactionId,
+                    infoHash,
+                    this._peerId,
+                    0, 0, 0, 2, 0, 0, 0
+            );
+
+            await _client.SendAsync(announceReq, announceReq.Length);
+
+            response = await ReceiveTimeoutAsync(TimeSpan.FromSeconds(3));
+            var announceResponse = ReadAnnounceResponse(response.Buffer);
+
+            return announceResponse.Endpoints;
         }
 
         private async Task<UdpReceiveResult> ReceiveTimeoutAsync(TimeSpan timeout, CancellationToken token = default)
@@ -32,37 +62,9 @@ namespace IOU
 
             if (rcvT.IsCompleted)
                 return rcvT.Result;
-            
+
             _client.Dispose();
             throw new TimeoutException($"Receiving from UDP endpoint {EndPoint} timed out after {timeout}");
-        }
-
-        public async Task<IPEndPoint[]> AnnounceAsync(byte[] infoHash)
-        {
-            var conreq = BuildConnectionRequest(0);
-            await _client.SendAsync(conreq, conreq.Length);
-
-            // var d = Task.Delay(TimeSpan.FromSeconds(5));
-            // var x = Task.FromException<TimeoutException>(new TimeoutException()).;
-            // var response = await Task.WhenAny(client.ReceiveAsync(), x);
-            // Task.Delay(TimeSpan.FromSeconds(5)).ContinueWith(_=>client.Close());
-            var response = await ReceiveTimeoutAsync(TimeSpan.FromSeconds(3));
-            var resp = ReadConnectionResponse(response.Buffer);
-
-            var peerId = Encoding.ASCII.GetBytes("-SLPSTR/BRNCLE-AAAAAAAAAAAAAAAA");
-
-            var announceReq = BuildAnnounceRequest(resp.ConnectionId, resp.TransactionId, infoHash, peerId, 0, 0, 0, 2,
-                0, 0, 0);
-
-            await _client.SendAsync(announceReq, announceReq.Length);
-
-            response = await ReceiveTimeoutAsync(TimeSpan.FromSeconds(3));
-            var announceResponse = ReadAnnounceResponse(response.Buffer);
-            
-            foreach(var ep in announceResponse.Endpoints)
-                Console.WriteLine($"Announce Con: {ep}");
-
-            return announceResponse.Endpoints.ToArray();
         }
 
         private byte[] BuildConnectionRequest(int transactionId)
@@ -121,9 +123,9 @@ namespace IOU
             var transactionId = be.GetUInt32(reader.ReadBytes(4));
             var connectionId = be.GetUInt64(reader.ReadBytes(8));
 
-            return new ConnectResponse {Action = action, TransactionId = transactionId, ConnectionId = connectionId};
+            return new ConnectResponse { Action = action, TransactionId = transactionId, ConnectionId = connectionId };
         }
-        
+
         private struct AnnounceResponse
         {
             public List<IPEndPoint> Endpoints { get; set; }
@@ -142,15 +144,15 @@ namespace IOU
             var interval = be.GetUInt32(reader.ReadBytes(4));
             var leechers = be.GetUInt32(reader.ReadBytes(4));
             var seeders = be.GetUInt32(reader.ReadBytes(4));
-            
+
             var endpoints = new List<IPEndPoint>();
             while (reader.BaseStream.Position != reader.BaseStream.Length)
             {
                 var ip = new IPAddress(reader.ReadBytes(4));
-                var port = be.GetInt16(reader.ReadBytes(2));
+                var port = be.GetUInt16(reader.ReadBytes(2));
                 endpoints.Add(new IPEndPoint(ip, port));
             }
-            
+
             return new AnnounceResponse
             {
                 Endpoints = endpoints

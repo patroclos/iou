@@ -2,6 +2,7 @@ using System;
 using System.CodeDom.Compiler;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace IOU
@@ -42,21 +43,34 @@ namespace IOU
             return strWriter.ToString();
         }
 
+        public byte[] ToByteArray() => BEnc.EncodeBuffer(this);
+
         public byte[] Hash()
         {
             using var sha = System.Security.Cryptography.SHA1.Create();
             using var stream = new MemoryStream();
             using var writer = new BinaryWriter(stream);
             Encode(writer);
+            stream.Seek(0, SeekOrigin.Begin);
             var hash = sha.ComputeHash(stream);
             return hash;
         }
+
+        public T Value<T>() => MetaInfoSerializer.Deserialize<T>(this);
+
+        public BEnc this[int idx] =>
+            (this as BLst ?? throw new InvalidOperationException())
+            .Value.ElementAt(idx);
+
+        public BEnc? this[string key] =>
+            (this as BDict ?? throw new InvalidOperationException())
+            [key];
 
         public static byte[] EncodeBuffer(BEnc value)
         {
             var stream = new MemoryStream();
             var writer = new BinaryWriter(stream);
-            
+
             value.Encode(writer);
             writer.Close();
 

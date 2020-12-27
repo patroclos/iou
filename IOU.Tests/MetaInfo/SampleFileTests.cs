@@ -18,7 +18,7 @@ namespace IOU.Tests.MetaInfo
             Assert.IsTrue(BEnc.TryParseExpr(content.AsSpan(), out var value, out var consumed));
             Assert.AreEqual(content.Length, consumed);
             Assert.IsNotNull(value);
-            Console.WriteLine(value.ToString());
+            Console.WriteLine(value!.ToString());
 
             var recoded = BEnc.EncodeBuffer(value);
             
@@ -33,12 +33,16 @@ namespace IOU.Tests.MetaInfo
             Assert.IsTrue(BEnc.TryParseExpr(content.AsSpan(), out var value, out var consumed));
             Assert.AreEqual(content.Length, consumed);
             Assert.IsNotNull(value);
+
+            var file = MetaInfoSerializer.Deserialize<TorrentFileDto>(value!);
+            Assert.IsNotNull(file);
+
+            var info = file.Info;
             
-            var info = MetaInfoSerializer.Deserialize<InfoDto>(((BDict) value)["info"]!);
             Assert.IsNotNull(info);
             Assert.IsNotNull(info.Files);
             Assert.IsNotEmpty(info.Files);
-            Assert.IsNotNull(info.Files[0].Path);
+            Assert.IsNotNull(info.Files![0].Path);
         }
     }
 }

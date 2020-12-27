@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace IOU
@@ -47,18 +45,5 @@ namespace IOU
         {
             return $"{nameof(Length)}: {Length}, {nameof(Path)}: {string.Join("/", Path.Select(s=>s.Utf8String))}";
         }
-    }
-
-    public struct FileSpan
-    {
-        public TorrentFile File;
-        public Memory<byte> Content;
-    }
-
-    public struct TorrentInfo
-    {
-        public BDict Encoded;
-
-        public IEnumerable<TorrentFile> Files;
     }
 }
