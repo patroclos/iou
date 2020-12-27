@@ -8,6 +8,8 @@ using IOU.DHT;
 using System.Net;
 using System.Linq;
 using System.Text;
+using System.Collections.Generic;
+using IOU.Peer;
 
 namespace IOU.Cli
 {
@@ -69,8 +71,10 @@ namespace IOU.Cli
             }
 
             var fileInfo = MetaInfoSerializer.Deserialize<TorrentFileDto>(expr);
-            // Console.WriteLine(expr);
+            byte[] infoHash = expr["info"]!.Hash();
+
             Console.WriteLine($"Summary for '{fileInfo.Info.Name}'");
+            Console.WriteLine($"InfoHash: {Convert.ToHexString(infoHash)}");
             var files = fileInfo.Info.Files;
             if (files != null)
             {
@@ -96,10 +100,13 @@ namespace IOU.Cli
             }
 
             var fileInfo = MetaInfoSerializer.Deserialize<TorrentFileDto>(expr);
+            byte[] infoHash = expr["info"]!.Hash();
+            byte[] peerId = Encoding.ASCII.GetBytes("-AZ2200-6wfG2wk6wWLc");
 
-            foreach (var tier in fileInfo.AnnounceList)
+            var endpoints = new List<IPEndPoint>();
+            for (var tier = 0; tier < fileInfo.AnnounceList.Count && endpoints.Count == 0; tier++)
             {
-                foreach (var announcer in tier)
+                foreach (var announcer in fileInfo.AnnounceList[tier])
                 {
                     try
                     {
@@ -109,13 +116,10 @@ namespace IOU.Cli
 
                         var ip = (await Dns.GetHostEntryAsync(uri.Host)).AddressList[0];
                         Console.WriteLine($"[announce] {uri} ({ip})");
-                        var announce = new UdpAnnounce(new IPEndPoint(ip, uri.Port), Encoding.ASCII.GetBytes("-AZ2200-6wfG2wk6wWLc"));
-                        var result = await announce.AnnounceAsync(expr["info"]!.Hash());
+                        var announce = new UdpAnnounce(new IPEndPoint(ip, uri.Port), peerId);
+                        var result = await announce.AnnounceAsync(infoHash);
 
-                        foreach (var peerIp in result)
-                        {
-                            Console.WriteLine($"Peer: {peerIp}");
-                        }
+                        endpoints.AddRange(result);
                     }
                     catch (Exception e)
                     {
@@ -125,9 +129,30 @@ namespace IOU.Cli
                 }
             }
 
-            // TODO: dto -> model
-            // TODO: announce -> stream endpoints to "download manager"?
-            throw new NotImplementedException();
+            foreach (var peerIp in endpoints)
+            {
+                try
+                {
+                    // TODO: to avoid the awkward delayed StartMessageLoop after listener setup
+                    // we could maybe turn this into an observable?
+                    // this would mean splitting the writing part off
+                    Console.WriteLine($"Peer: {peerIp}");
+                    var con = await PeerConnection.EstablishConnection(peerIp, TimeSpan.FromSeconds(1.5));
+                    Console.WriteLine($"Connected to {peerIp}");
+                    con.MessageReceived += msg => Console.WriteLine($"{peerIp} => {msg}");
+                    con.StartMessageLoop();
+                    await con.SendMessage(new Handshake(new byte[8], peerId, infoHash));
+                    await con.SendMessage(new Unchoke());
+                    await con.SendMessage(new Interested());
+
+                    await Task.Delay(50000);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    continue;
+                }
+            }
         }
 
         async static Task<NodeId> CreatePublicIpNodeId()
@@ -155,5 +180,6 @@ namespace IOU.Cli
             var text = await reader.ReadToEndAsync();
             return IPAddress.Parse(text);
         }
+
     }
 }

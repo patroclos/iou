@@ -1,6 +1,5 @@
 using System.Buffers;
 using System.Linq;
-using System.Text;
 using NUnit.Framework;
 
 namespace IOU.Peer

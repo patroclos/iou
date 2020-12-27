@@ -2,11 +2,10 @@ using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 namespace IOU.Peer
 {
-    public class Handshake : IEquatable<Handshake>
+    public class Handshake : IEquatable<Handshake>, IProtocolMessage, ISelfSerialize
     {
         public const int ByteLength = 68;
         public static readonly byte[] Magic = new char[]{
@@ -49,7 +48,7 @@ namespace IOU.Peer
             Span<byte> bytes = buffer.Slice(0, ByteLength).ToArray();
 
             if (!bytes.Slice(0, Magic.Length).SequenceEqual(Magic))
-                return null;
+                throw new ArgumentOutOfRangeException(nameof(buffer), "Buffer doesn't start w/ magic sequence");
 
             var reserved = bytes.Slice(Magic.Length, 8);
             var infoHash = bytes.Slice(Magic.Length + 8, 20);

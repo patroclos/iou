@@ -1,4 +1,8 @@
 using System.Buffers;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using IOU.Peer;
 using NUnit.Framework;
 
@@ -65,7 +69,7 @@ namespace IOU.Tests.Peer
             var result = ProtocolSerialization.TryParseMessage(new ReadOnlySequence<byte>(buffer));
             Assert.IsTrue(result.HasValue);
             Assert.IsInstanceOf(typeof(Have), result!.Value.Message);
-            Assert.AreEqual(100u, (result!.Value.Message as Have)!.PieceIndex);
+            Assert.AreEqual(100u, ((Have)result.Value.Message).PieceIndex);
         }
 
         [Test]

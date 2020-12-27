@@ -32,9 +32,10 @@ namespace IOU.Tests.MetaInfo
             Assert.AreEqual(4096 + 5, encoded.Length);
             
             Assert.IsTrue(BStr.TryParse(encoded, out var parsed, out var consumedBytes));
+            Assert.IsNotNull(parsed);
             Assert.AreEqual(4096 + 5, consumedBytes);
             
-            Assert.AreEqual(bytes.ToArray(), parsed.Value.ToArray());
+            Assert.AreEqual(bytes.ToArray(), parsed!.Value.ToArray());
         }
 
     }

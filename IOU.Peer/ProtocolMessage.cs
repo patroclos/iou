@@ -2,56 +2,59 @@ using System.IO;
 
 namespace IOU.Peer
 {
-    // TODO: should all these message definitions be interfaces instead?
     public interface IProtocolMessage
     {
     }
 
-    public class KeepAlive : IProtocolMessage
+    public interface ISelfSerialize {
+        byte[] ToByteArray();
+    }
+
+    public struct KeepAlive : IProtocolMessage
     {
     }
 
-    public class Choke : IProtocolMessage
+    public struct Choke : IProtocolMessage
     {
     }
 
-    public class Unchoke : IProtocolMessage
+    public struct Unchoke : IProtocolMessage
     {
     }
 
-    public class Interested : IProtocolMessage
+    public struct Interested : IProtocolMessage
     {
     }
 
-    public class NotInterested : IProtocolMessage
+    public struct NotInterested : IProtocolMessage
     {
     }
 
-    public class Have : IProtocolMessage
+    public struct Have : IProtocolMessage
     {
         public uint PieceIndex;
     }
 
-    public class Bitfield : IProtocolMessage
+    public struct Bitfield : IProtocolMessage
     {
         public byte[] Bits;
     }
 
-    public class Request : IProtocolMessage
+    public struct Request : IProtocolMessage
     {
         public uint PieceIndex;
         public uint Begin;
         public uint Length;
     }
 
-    public class Piece : IProtocolMessage
+    public struct Piece : IProtocolMessage
     {
         public uint PieceIndex;
         public uint Begin;
         public byte[] Content;
     }
 
-    public class Cancel : IProtocolMessage
+    public struct Cancel : IProtocolMessage
     {
         public uint PieceIndex;
         public uint Begin;
@@ -61,6 +64,12 @@ namespace IOU.Peer
     public abstract class Extended : IProtocolMessage
     {
         public string ExtensionName { get; }
+
+        protected Extended(string extensionName)
+        {
+            ExtensionName = extensionName;
+        }
+
         public abstract void WriteTo(BinaryWriter writer);
     }
 }

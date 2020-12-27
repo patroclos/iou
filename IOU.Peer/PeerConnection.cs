@@ -1,87 +1,127 @@
 using System;
 using System.Net;
-using System.Text;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using System.Diagnostics;
+using System.IO.Pipelines;
+using System.Buffers;
+using System.Linq;
+using System.Threading;
+using System.IO;
 
 namespace IOU.Peer
 {
     public class PeerConnection : IDisposable
     {
-        private readonly IPEndPoint EndPoint;
-        private readonly TcpClient _client;
+        private readonly Stream _stream;
+        private readonly PipeReader _reader;
+        private readonly CancellationTokenSource _cancelTokenSource;
+
+        public Handshake? PeerHandshake { get; private set; }
+        public Bitfield? PeerBitfield { get; private set; }
 
         public bool IsChoked { get; private set; } = true;
         public bool IsInterested { get; private set; } = false;
 
-        private PeerConnection(IPEndPoint endPoint, TcpClient client)
+        public event Action<IProtocolMessage> MessageReceived = delegate { };
+
+        public PeerConnection(Stream stream)
         {
-            EndPoint = endPoint;
-            _client = client;
+            _reader = PipeReader.Create(stream);
+            _stream = stream;
+            _cancelTokenSource = new CancellationTokenSource();
         }
 
         public static async Task<PeerConnection> EstablishConnection(IPEndPoint endpoint, TimeSpan timeout)
         {
-            var client = new TcpClient();
-            var connectTask = client.ConnectAsync(endpoint.Address, endpoint.Port);
+            var sock = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            var connectTask = sock.ConnectAsync(endpoint.Address, endpoint.Port);
             var cancelTask = Task.Delay(timeout);
 
             await await Task.WhenAny(connectTask, cancelTask);
 
             if (!connectTask.IsCompleted)
             {
-                client.Dispose();
+                sock.Dispose();
                 throw new TimeoutException(
                     $"{nameof(EstablishConnection)} exeeded timeout of {timeout} while connecting to {endpoint}");
             }
 
             if (connectTask.IsFaulted)
             {
-                client.Dispose();
+                sock.Dispose();
                 throw new AggregateException($"Failed establishing peer-connection with {endpoint}",
                     connectTask.Exception!);
             }
 
-            return new PeerConnection(endpoint, client);
+            return new PeerConnection(new NetworkStream(sock, ownsSocket: true));
         }
 
-        // TODO: where does the infohash and peerid come from (constructor inject?)
-        public async Task DoHandshake()
+        public async Task SendMessage(IProtocolMessage msg)
         {
-            throw new NotImplementedException();
-            /*
-            var stream = _client.GetStream();
-            var handshake = BuildHandshake();
-            await stream.WriteAsync(handshake, 0, handshake.Length);
-            throw new NotImplementedException();
-            */
+            var buf = ProtocolSerialization.SerializeMessage(msg);
+            await this._stream.WriteAsync(buf, 0, buf.Length);
         }
 
-        private async void StartMessageLoop() {
-            var stream = _client.GetStream();
+        public async void StartMessageLoop()
+        {
+            var cancelToken = this._cancelTokenSource.Token;
 
-            byte[] readBuf = new byte[4096];
+            this.PeerHandshake = await this.ReadHandshake(_reader);
 
-            throw new NotImplementedException();
+            while (true)
+            {
+                if (cancelToken.IsCancellationRequested)
+                    cancelToken.ThrowIfCancellationRequested();
+                var result = await _reader.ReadAsync(cancelToken);
+                var buffer = result.Buffer;
+
+                while (true)
+                {
+                    var msg = ProtocolSerialization.TryParseMessage(buffer);
+                    if (!msg.HasValue)
+                        break;
+
+                    buffer = buffer.Slice(msg.Value.Position);
+                    _reader.AdvanceTo(msg.Value.Position);
+
+                    if (msg.Value.Message is Bitfield bf)
+                        this.PeerBitfield = bf;
+
+                    MessageReceived(msg.Value.Message);
+                }
+            }
+        }
+
+        private async Task<Handshake> ReadHandshake(PipeReader reader)
+        {
+            while (true)
+            {
+                var result = await reader.ReadAsync();
+                var buf = result.Buffer;
+
+                var handshake = Handshake.TryParse(buf);
+
+                if (handshake != null)
+                {
+                    reader.AdvanceTo(buf.GetPosition(Handshake.ByteLength));
+                    return handshake;
+                }
+
+                if (result.IsCompleted)
+                {
+                    Console.WriteLine(Utils.HexDump(buf.ToArray(), 32));
+                    throw new Exception($"EOF before handshake after {buf.Length} bytes");
+                }
+
+                continue;
+
+            }
         }
 
         public void Dispose()
         {
-            _client.Dispose();
-        }
-
-        private static byte[] BuildHandshake(byte[] infoHash, byte[] peerId) {
-            Debug.Assert(infoHash.Length == 20);
-            Debug.Assert(peerId.Length == 20);
-
-            Span<byte> buf = stackalloc byte[68];
-            buf[0]=19;
-            Encoding.UTF8.GetBytes("BitTorrent protocol", buf.Slice(1));
-            infoHash.AsSpan().CopyTo(buf.Slice(28));
-            peerId.AsSpan().CopyTo(buf.Slice(48));
-
-            return buf.ToArray();
+            _stream.Dispose();
+            _cancelTokenSource.Dispose();
         }
     }
 }

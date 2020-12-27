@@ -7,6 +7,20 @@ using System.Threading.Tasks;
 
 namespace IOU.DHT
 {
+    public class DhtQueryTimeoutException : TimeoutException
+    {
+        public string QueryName { get; }
+        public BDict Arguments { get; }
+        public TimeSpan Timeout { get; }
+
+        public DhtQueryTimeoutException(string query, BDict arguments, TimeSpan timeout)
+        {
+            this.QueryName = query;
+            this.Arguments = arguments;
+            this.Timeout = timeout;
+        }
+    }
+
     public class NetworkDhtQueryable : IDhtQueryable
     {
         private readonly UdpClient _client;
@@ -51,13 +65,13 @@ namespace IOU.DHT
             try
             {
                 await _client.SendAsync(encoded, encoded.Length, node);
-                var timeoutT = Task.Delay(timeout ?? TimeSpan.FromSeconds(3));
+                var effectiveTimeout = timeout ?? TimeSpan.FromSeconds(3);
+                var timeoutT = Task.Delay(effectiveTimeout);
 
                 await Task.WhenAny(tcs.Task, timeoutT);
 
-                // TODO: create custom timeout exception class, carrying the query and args
                 if (timeoutT.IsCompleted)
-                    throw new TimeoutException($"DHT Query {query} exeeded timeout");
+                    throw new DhtQueryTimeoutException(query, arguments, effectiveTimeout);
 
                 return tcs.Task.Result;
             }

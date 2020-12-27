@@ -33,7 +33,7 @@ namespace IOU
             var conreq = BuildConnectionRequest(0);
             await _client.SendAsync(conreq, conreq.Length);
 
-            var response = await ReceiveTimeoutAsync(TimeSpan.FromSeconds(3));
+            var response = await ReceiveTimeoutAsync(TimeSpan.FromSeconds(30));
             var resp = ReadConnectionResponse(response.Buffer);
 
             // TODO: this is garbage, maybe use a struct or builder pattern?
@@ -47,7 +47,7 @@ namespace IOU
 
             await _client.SendAsync(announceReq, announceReq.Length);
 
-            response = await ReceiveTimeoutAsync(TimeSpan.FromSeconds(3));
+            response = await ReceiveTimeoutAsync(TimeSpan.FromSeconds(30));
             var announceResponse = ReadAnnounceResponse(response.Buffer);
 
             return announceResponse.Endpoints;
