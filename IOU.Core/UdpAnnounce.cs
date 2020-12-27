@@ -12,7 +12,7 @@ using BinaryEncoding;
 
 namespace IOU
 {
-    public class UdpAnnounce
+    public partial class UdpAnnounce
     {
         private readonly IPEndPoint EndPoint;
         private readonly UdpClient _client;
