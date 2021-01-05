@@ -18,7 +18,7 @@ namespace IOU.Peer
         public byte[] PeerId;
         public byte[] InfoHash;
 
-        public Handshake(byte[] reserved, byte[] peerId, byte[] infoHash)
+        public Handshake(byte[] reserved, byte[] infoHash, byte[] peerId)
         {
             Debug.Assert(reserved.Length == 8);
             Debug.Assert(infoHash.Length == 20);
@@ -39,6 +39,9 @@ namespace IOU.Peer
 
             return buf;
         }
+
+        public static Handshake? TryParse(byte[] buffer)
+            => TryParse(new ReadOnlySequence<byte>(buffer));
 
         public static Handshake? TryParse(ReadOnlySequence<byte> buffer)
         {

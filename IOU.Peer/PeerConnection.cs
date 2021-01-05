@@ -13,6 +13,7 @@ namespace IOU.Peer
     public class PeerConnection : IDisposable
     {
         private readonly Stream _stream;
+        private readonly Stream _outStream;
         private readonly PipeReader _reader;
         private readonly CancellationTokenSource _cancelTokenSource;
 
@@ -24,11 +25,14 @@ namespace IOU.Peer
 
         public event Action<IProtocolMessage> MessageReceived = delegate { };
 
-        public PeerConnection(Stream stream)
+        public PeerConnection(Stream stream, Stream? outputStream = null)
         {
             _reader = PipeReader.Create(stream);
             _stream = stream;
+            _outStream = outputStream ?? stream;
             _cancelTokenSource = new CancellationTokenSource();
+
+            _ = RunMessageLoop();
         }
 
         public static async Task<PeerConnection> EstablishConnection(IPEndPoint endpoint, TimeSpan timeout)
@@ -56,17 +60,17 @@ namespace IOU.Peer
             return new PeerConnection(new NetworkStream(sock, ownsSocket: true));
         }
 
-        public async Task SendMessage(IProtocolMessage msg)
+        public Task SendMessage(IProtocolMessage msg)
         {
             var buf = ProtocolSerialization.SerializeMessage(msg);
-            await this._stream.WriteAsync(buf, 0, buf.Length);
+            return this._outStream.WriteAsync(buf, 0, buf.Length);
         }
 
-        public async void StartMessageLoop()
+        private async Task RunMessageLoop()
         {
             var cancelToken = this._cancelTokenSource.Token;
 
-            this.PeerHandshake = await this.ReadHandshake(_reader);
+            this.PeerHandshake = await PeerConnection.ReadHandshake(_reader);
 
             while (true)
             {
@@ -92,7 +96,7 @@ namespace IOU.Peer
             }
         }
 
-        private async Task<Handshake> ReadHandshake(PipeReader reader)
+        private static async Task<Handshake> ReadHandshake(PipeReader reader)
         {
             while (true)
             {
@@ -120,6 +124,8 @@ namespace IOU.Peer
 
         public void Dispose()
         {
+            _reader.Complete();
+            _outStream.Dispose();
             _stream.Dispose();
             _cancelTokenSource.Dispose();
         }

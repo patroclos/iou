@@ -55,13 +55,9 @@ namespace IOU
 
         private async Task<UdpReceiveResult> ReceiveTimeoutAsync(TimeSpan timeout, CancellationToken token = default)
         {
-            var rcvT = _client.ReceiveAsync();
-            var timeoutT = Task.Delay(timeout, token);
-
-            await Task.WhenAny(rcvT, timeoutT);
-
-            if (rcvT.IsCompleted)
-                return rcvT.Result;
+            var receiveTask = _client.ReceiveAsync();
+            if(receiveTask == await Task.WhenAny(receiveTask, Task.Delay(timeout, token)))
+                return await receiveTask;
 
             _client.Dispose();
             throw new TimeoutException($"Receiving from UDP endpoint {EndPoint} timed out after {timeout}");

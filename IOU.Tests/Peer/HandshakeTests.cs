@@ -36,7 +36,8 @@ namespace IOU.Peer
         }
 
         [Test]
-        public void Handshake_Encode_Decode_Equality() {
+        public void Handshake_Encode_Decode_Equality()
+        {
             var handshake = new Handshake(new byte[8], new byte[20], new byte[20]);
             var encoded = handshake.ToByteArray();
             var decoded = Handshake.TryParse(new ReadOnlySequence<byte>(encoded));
