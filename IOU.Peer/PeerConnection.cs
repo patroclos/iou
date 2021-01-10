@@ -8,10 +8,8 @@ using System.Linq;
 using System.Threading;
 using System.IO;
 
-namespace IOU.Peer
-{
-	public class PeerConnection : IDisposable
-	{
+namespace IOU.Peer {
+	public class PeerConnection : IDisposable {
 		private readonly Stream _stream;
 		private readonly Stream _outStream;
 		private readonly PipeReader _reader;
@@ -25,8 +23,7 @@ namespace IOU.Peer
 
 		public event Action<IProtocolMessage> MessageReceived = delegate { };
 
-		public PeerConnection(Stream stream, Stream? outputStream = null)
-		{
+		public PeerConnection(Stream stream, Stream? outputStream = null) {
 			_reader = PipeReader.Create(stream);
 			_stream = stream;
 			_outStream = outputStream ?? stream;
@@ -35,23 +32,20 @@ namespace IOU.Peer
 			_ = RunMessageLoop();
 		}
 
-		public static async Task<PeerConnection> EstablishConnection(IPEndPoint endpoint, TimeSpan timeout)
-		{
+		public static async Task<PeerConnection> EstablishConnection(IPEndPoint endpoint, TimeSpan timeout) {
 			var sock = new Socket(endpoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 			var connectTask = sock.ConnectAsync(endpoint.Address, endpoint.Port);
 			var cancelTask = Task.Delay(timeout);
 
 			await await Task.WhenAny(connectTask, cancelTask);
 
-			if (!connectTask.IsCompleted)
-			{
+			if (!connectTask.IsCompleted) {
 				sock.Dispose();
 				throw new TimeoutException(
 					$"{nameof(EstablishConnection)} exeeded timeout of {timeout} while connecting to {endpoint}");
 			}
 
-			if (connectTask.IsFaulted)
-			{
+			if (connectTask.IsFaulted) {
 				sock.Dispose();
 				throw new AggregateException($"Failed establishing peer-connection with {endpoint}",
 					connectTask.Exception!);
@@ -60,27 +54,23 @@ namespace IOU.Peer
 			return new PeerConnection(new NetworkStream(sock, ownsSocket: true));
 		}
 
-		public Task SendMessage(IProtocolMessage msg)
-		{
+		public Task SendMessage(IProtocolMessage msg) {
 			var buf = ProtocolSerialization.SerializeMessage(msg);
 			return this._outStream.WriteAsync(buf, 0, buf.Length);
 		}
 
-		private async Task RunMessageLoop()
-		{
+		private async Task RunMessageLoop() {
 			var cancelToken = this._cancelTokenSource.Token;
 
 			this.PeerHandshake = await PeerConnection.ReadHandshake(_reader);
 
-			while (true)
-			{
+			while (true) {
 				if (cancelToken.IsCancellationRequested)
 					cancelToken.ThrowIfCancellationRequested();
 				var result = await _reader.ReadAsync(cancelToken);
 				var buffer = result.Buffer;
 
-				while (true)
-				{
+				while (true) {
 					var msg = ProtocolSerialization.TryParseMessage(buffer);
 					if (!msg.HasValue)
 						break;
@@ -96,23 +86,19 @@ namespace IOU.Peer
 			}
 		}
 
-		private static async Task<Handshake> ReadHandshake(PipeReader reader)
-		{
-			while (true)
-			{
+		private static async Task<Handshake> ReadHandshake(PipeReader reader) {
+			while (true) {
 				var result = await reader.ReadAsync();
 				var buf = result.Buffer;
 
 				var handshake = Handshake.TryParse(buf);
 
-				if (handshake != null)
-				{
+				if (handshake != null) {
 					reader.AdvanceTo(buf.GetPosition(Handshake.ByteLength));
 					return handshake;
 				}
 
-				if (result.IsCompleted)
-				{
+				if (result.IsCompleted) {
 					Console.WriteLine(Utils.HexDump(buf.ToArray(), 32));
 					throw new Exception($"EOF before handshake after {buf.Length} bytes");
 				}
@@ -122,8 +108,7 @@ namespace IOU.Peer
 			}
 		}
 
-		public void Dispose()
-		{
+		public void Dispose() {
 			_reader.Complete();
 			_outStream.Dispose();
 			_stream.Dispose();

@@ -5,26 +5,20 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 
-namespace IOU
-{
+namespace IOU {
 	[AttributeUsage(AttributeTargets.Property)]
-	public sealed class MetaInfoPropertyAttribute : Attribute
-	{
+	public sealed class MetaInfoPropertyAttribute : Attribute {
 		public string? Name;
-		public MetaInfoPropertyAttribute(string? name)
-		{
+		public MetaInfoPropertyAttribute(string? name) {
 			Name = name;
 		}
 	}
 
 	// 5:asdfx -> BStr
 	// 5:asdfx -> string
-	public static class MetaInfoSerializer
-	{
-		public static BEnc? Serialize(object content)
-		{
-			switch (content)
-			{
+	public static class MetaInfoSerializer {
+		public static BEnc? Serialize(object content) {
+			switch (content) {
 				case BEnc enc:
 					return enc;
 				case string s:
@@ -39,8 +33,7 @@ namespace IOU
 					return new BInt(i);
 				case IDictionary d:
 					return new BDict(d.Keys.Cast<object>()
-						.Zip(d.Values.Cast<object>(), (k, v) =>
-						{
+						.Zip(d.Values.Cast<object>(), (k, v) => {
 							var key = Serialize(k) as BStr;
 							if (key == null)
 								throw new InvalidOperationException();
@@ -53,22 +46,19 @@ namespace IOU
 						})
 						.ToImmutableList()
 					);
-				case IEnumerable e:
-					{
+				case IEnumerable e: {
 						var serializedItems = e.Cast<object>().Select(Serialize);
 						if (serializedItems.Any(i => i == null))
 							throw new InvalidOperationException("Failed serializing some values of an enumerable to BLst");
 						return new BLst(serializedItems as IEnumerable<BEnc>);
 					}
-				default:
-					{
+				default: {
 						var props = content.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public);
 						// .Where(p => p. p.GetCustomAttribute(typeof(MetaInfoPropertyAttribute)) != null);
 
 						var dict = new Dictionary<string, object>();
 
-						foreach (var p in props)
-						{
+						foreach (var p in props) {
 							var attr = p.GetCustomAttribute(typeof(MetaInfoPropertyAttribute)) as MetaInfoPropertyAttribute;
 							var val = p.GetValue(content);
 							if (val == null)
@@ -87,15 +77,12 @@ namespace IOU
 
 		public static T Deserialize<T>(BEnc encoded) => (T)Deserialize(encoded, typeof(T));
 
-		public static object Deserialize(BEnc encoded, Type type)
-		{
+		public static object Deserialize(BEnc encoded, Type type) {
 			if (type.IsInstanceOfType(encoded))
 				return encoded;
 
-			switch (encoded)
-			{
-				case BStr str:
-					{
+			switch (encoded) {
+				case BStr str: {
 						if (type == typeof(string))
 							return str.Utf8String;
 						if (type == typeof(byte[]))
@@ -131,8 +118,7 @@ namespace IOU
 
 					throw new InvalidOperationException($"Can't deserialize a {encoded.Type} to {type}");
 				case BLst lst:
-					if (type.IsArray)
-					{
+					if (type.IsArray) {
 						var elementType = type.GetElementType()
 						  ?? throw new InvalidOperationException($"");
 						var items = lst.Value.Select(v => Deserialize(v, elementType)).ToArray();
@@ -142,8 +128,7 @@ namespace IOU
 						return arr;
 					}
 
-					if (type.IsConstructedGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
-					{
+					if (type.IsConstructedGenericType && type.GetGenericTypeDefinition() == typeof(List<>)) {
 						var inst = Activator.CreateInstance(type) as IList;
 
 						if (inst == null)
@@ -155,12 +140,10 @@ namespace IOU
 					}
 
 					throw new InvalidOperationException($"Can't deserialize a {encoded.Type} to {type}");
-				case BDict dict:
-					{
+				case BDict dict: {
 						var dictType = type.GetInterfaces().FirstOrDefault(iface =>
 							iface.IsConstructedGenericType && iface.GetGenericTypeDefinition() == typeof(IDictionary<,>));
-						if (dictType != null)
-						{
+						if (dictType != null) {
 							var tk = dictType.GenericTypeArguments[0];
 							var tv = dictType.GenericTypeArguments[0];
 							var inst = Activator.CreateInstance(type) as IDictionary;
@@ -173,8 +156,7 @@ namespace IOU
 
 							return inst;
 						}
-						else
-						{
+						else {
 
 							var inst = Activator.CreateInstance(type);
 							if (inst == null)
@@ -184,8 +166,7 @@ namespace IOU
 								.Where(p => p.CanWrite)
 								.ToArray();
 
-							foreach (var p in props)
-							{
+							foreach (var p in props) {
 								var attr =
 									p.GetCustomAttribute(typeof(MetaInfoPropertyAttribute)) as MetaInfoPropertyAttribute;
 								if (attr == null)

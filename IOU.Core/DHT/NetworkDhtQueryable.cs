@@ -5,39 +5,32 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace IOU.DHT
-{
-	public class DhtQueryTimeoutException : TimeoutException
-	{
+namespace IOU.DHT {
+	public class DhtQueryTimeoutException : TimeoutException {
 		public string QueryName { get; }
 		public BDict Arguments { get; }
 		public TimeSpan Timeout { get; }
 
-		public DhtQueryTimeoutException(string query, BDict arguments, TimeSpan timeout)
-		{
+		public DhtQueryTimeoutException(string query, BDict arguments, TimeSpan timeout) {
 			this.QueryName = query;
 			this.Arguments = arguments;
 			this.Timeout = timeout;
 		}
 	}
 
-	public class NetworkDhtQueryable : IDhtQueryable
-	{
+	public class NetworkDhtQueryable : IDhtQueryable {
 		private readonly UdpClient _client;
 		private int _lastTransactionId;
 
 		private readonly List<(byte[], TaskCompletionSource<BEnc>)> _pending
 			= new List<(byte[], TaskCompletionSource<BEnc>)>();
 
-		public NetworkDhtQueryable(UdpClient client)
-		{
+		public NetworkDhtQueryable(UdpClient client) {
 			_client = client;
 		}
 
-		private byte[] NewTransaction
-		{
-			get
-			{
+		private byte[] NewTransaction {
+			get {
 				_lastTransactionId++;
 				return new byte[] {
 					(byte)(_lastTransactionId >> 8),
@@ -46,11 +39,9 @@ namespace IOU.DHT
 			}
 		}
 
-		public async Task<BEnc> Query(string query, BDict arguments, IPEndPoint node, TimeSpan? timeout = null)
-		{
+		public async Task<BEnc> Query(string query, BDict arguments, IPEndPoint node, TimeSpan? timeout = null) {
 			var trn = NewTransaction;
-			var args = MetaInfoSerializer.Serialize(new
-			{
+			var args = MetaInfoSerializer.Serialize(new {
 				y = "q",
 				q = query,
 				a = arguments,
@@ -62,8 +53,7 @@ namespace IOU.DHT
 			var tcs = new TaskCompletionSource<BEnc>();
 			_pending.Add((trn, tcs));
 
-			try
-			{
+			try {
 				await _client.SendAsync(encoded, encoded.Length, node);
 				var effectiveTimeout = timeout ?? TimeSpan.FromSeconds(3);
 				var timeoutT = Task.Delay(effectiveTimeout);
@@ -75,8 +65,7 @@ namespace IOU.DHT
 
 				return tcs.Task.Result;
 			}
-			finally
-			{
+			finally {
 				_pending.RemoveAll(kv => kv.Item1.SequenceEqual(trn));
 			}
 		}
@@ -89,8 +78,7 @@ namespace IOU.DHT
 						timeout)
 					).Value<T>();
 
-		public void HandleResponse(BDict response)
-		{
+		public void HandleResponse(BDict response) {
 			if (response["y"]?.Value<string>() != "r")
 				throw new ArgumentOutOfRangeException(nameof(response), $"{response} is not a response");
 

@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 
-namespace IOU.MetaInfo
-{
-	public struct TorrentFileDto
-	{
+namespace IOU.MetaInfo {
+	public struct TorrentFileDto {
 		[MetaInfoProperty("announce")]
 		public string Announce { get; set; }
 

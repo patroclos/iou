@@ -2,15 +2,13 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+
 using NUnit.Framework;
 
-namespace IOU.Peer
-{
-	public class PeerConnectionTests
-	{
+namespace IOU.Peer {
+	public class PeerConnectionTests {
 		[Test]
-		public async Task Handshake_ParsedOutputEqualsInput()
-		{
+		public async Task Handshake_ParsedOutputEqualsInput() {
 			using var rcv = new MemoryStream();
 			using var trx = new MemoryStream();
 

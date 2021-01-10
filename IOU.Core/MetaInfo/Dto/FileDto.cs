@@ -1,7 +1,5 @@
-namespace IOU.MetaInfo
-{
-	public struct FileDto
-	{
+namespace IOU.MetaInfo {
+	public struct FileDto {
 		[MetaInfoProperty("length")]
 		public long Length { get; set; }
 

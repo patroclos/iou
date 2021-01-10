@@ -1,18 +1,13 @@
 using System.Buffers;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+
 using IOU.Peer;
+
 using NUnit.Framework;
 
-namespace IOU.Tests.Peer
-{
-	public class MessageDeserializationTests
-	{
+namespace IOU.Tests.Peer {
+	public class MessageDeserializationTests {
 		[Test]
-		public void ParseKeepAlive()
-		{
+		public void ParseKeepAlive() {
 			var buffer = new byte[] { 0, 0, 0, 0 };
 
 			var result = ProtocolSerialization.TryParseMessage(new ReadOnlySequence<byte>(buffer));
@@ -21,8 +16,7 @@ namespace IOU.Tests.Peer
 		}
 
 		[Test]
-		public void ParseChoke()
-		{
+		public void ParseChoke() {
 			var buffer = new byte[] { 0, 0, 0, 1, 0 };
 
 			var result = ProtocolSerialization.TryParseMessage(new ReadOnlySequence<byte>(buffer));
@@ -31,8 +25,7 @@ namespace IOU.Tests.Peer
 		}
 
 		[Test]
-		public void ParseUnchoke()
-		{
+		public void ParseUnchoke() {
 			var buffer = new byte[] { 0, 0, 0, 1, 1 };
 
 			var result = ProtocolSerialization.TryParseMessage(new ReadOnlySequence<byte>(buffer));
@@ -41,8 +34,7 @@ namespace IOU.Tests.Peer
 		}
 
 		[Test]
-		public void ParseInterested()
-		{
+		public void ParseInterested() {
 			var buffer = new byte[] { 0, 0, 0, 1, 2 };
 
 			var result = ProtocolSerialization.TryParseMessage(new ReadOnlySequence<byte>(buffer));
@@ -51,8 +43,7 @@ namespace IOU.Tests.Peer
 		}
 
 		[Test]
-		public void ParseNotInterested()
-		{
+		public void ParseNotInterested() {
 			var buffer = new byte[] { 0, 0, 0, 1, 3 };
 
 			var result = ProtocolSerialization.TryParseMessage(new ReadOnlySequence<byte>(buffer));
@@ -61,8 +52,7 @@ namespace IOU.Tests.Peer
 		}
 
 		[Test]
-		public void ParseHave()
-		{
+		public void ParseHave() {
 			// u32 len, 1b type, u32 piece_idx
 			var buffer = new byte[] { 0, 0, 0, 5, 4, 0, 0, 0, 100 };
 
@@ -73,8 +63,7 @@ namespace IOU.Tests.Peer
 		}
 
 		[Test]
-		public void FailParsingIncompleteHave()
-		{
+		public void FailParsingIncompleteHave() {
 			// 2 bytes short
 			var buffer = new byte[] { 0, 0, 0, 5, 4, 0, 0 };
 
@@ -83,8 +72,7 @@ namespace IOU.Tests.Peer
 		}
 
 		[Test]
-		public void ParseHaveWithRemainder()
-		{
+		public void ParseHaveWithRemainder() {
 			var buffer = new byte[] { 0, 0, 0, 5, 4, 0, 0, 0, 100, 20, 30 };
 
 			var result = ProtocolSerialization.TryParseMessage(new ReadOnlySequence<byte>(buffer));

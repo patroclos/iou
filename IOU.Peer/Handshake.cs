@@ -3,10 +3,8 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Linq;
 
-namespace IOU.Peer
-{
-	public class Handshake : IEquatable<Handshake>, IProtocolMessage, ISelfSerialize
-	{
+namespace IOU.Peer {
+	public class Handshake : IEquatable<Handshake>, IProtocolMessage, ISelfSerialize {
 		public const int ByteLength = 68;
 		public static readonly byte[] Magic = new char[]{
 			(char)19, 'B','i','t','T','o','r','r','e','n', 't',' ', 'p','r','o','t','o','c','o','l'
@@ -18,8 +16,7 @@ namespace IOU.Peer
 		public byte[] PeerId;
 		public byte[] InfoHash;
 
-		public Handshake(byte[] reserved, byte[] infoHash, byte[] peerId)
-		{
+		public Handshake(byte[] reserved, byte[] infoHash, byte[] peerId) {
 			Debug.Assert(reserved.Length == 8);
 			Debug.Assert(infoHash.Length == 20);
 			Debug.Assert(peerId.Length == 20);
@@ -29,8 +26,7 @@ namespace IOU.Peer
 			InfoHash = infoHash;
 		}
 
-		public byte[] ToByteArray()
-		{
+		public byte[] ToByteArray() {
 			var buf = new byte[ByteLength];
 			Magic.CopyTo(buf, 0);
 			Reserved.CopyTo(buf, 20);
@@ -43,8 +39,7 @@ namespace IOU.Peer
 		public static Handshake? TryParse(byte[] buffer)
 			=> TryParse(new ReadOnlySequence<byte>(buffer));
 
-		public static Handshake? TryParse(ReadOnlySequence<byte> buffer)
-		{
+		public static Handshake? TryParse(ReadOnlySequence<byte> buffer) {
 			if (buffer.Length < ByteLength)
 				return null;
 
@@ -60,8 +55,7 @@ namespace IOU.Peer
 			return new Handshake(reserved.ToArray(), infoHash.ToArray(), peerId.ToArray());
 		}
 
-		public bool Equals(Handshake? other)
-		{
+		public bool Equals(Handshake? other) {
 			if (ReferenceEquals(null, other))
 				return false;
 			if (other.GetType() != this.GetType())
@@ -72,8 +66,7 @@ namespace IOU.Peer
 				&& PeerId.SequenceEqual(other.PeerId);
 		}
 
-		public override bool Equals(object? obj)
-		{
+		public override bool Equals(object? obj) {
 			return Equals(obj as Handshake);
 		}
 

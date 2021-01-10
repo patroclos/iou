@@ -8,21 +8,17 @@ using IOU.DHT;
 using System.Net;
 using System.Linq;
 
-namespace IOU.Cli
-{
-	class Program
-	{
+namespace IOU.Cli {
+	class Program {
 		static Task<int> Main(string[] args)
 			=> CreateRootCommand().InvokeAsync(args);
 
-		private static RootCommand CreateRootCommand()
-		{
+		private static RootCommand CreateRootCommand() {
 			var torrentOpt =
 				new Option<FileInfo>(
 						new[] { "--torrent", "-t" },
 						"The .torrent file to operate on"
-				)
-				{ IsRequired = true };
+				) { IsRequired = true };
 
 			var prog = new Program();
 			var rootCmd = new RootCommand("IOU torrent CLI");
@@ -32,8 +28,7 @@ namespace IOU.Cli
 			summaryCommand.Handler = CommandHandler.Create<FileInfo>(prog.SummarizeTorrent);
 
 			var dhtCommand = new Command("dht", "Dump DHT info");
-			dhtCommand.Handler = CommandHandler.Create(async () =>
-			{
+			dhtCommand.Handler = CommandHandler.Create(async () => {
 				var ip = await AskPublicIpAddressAsync();
 				Console.WriteLine($"IP: {ip}");
 			});
@@ -44,13 +39,11 @@ namespace IOU.Cli
 			return rootCmd;
 		}
 
-		async Task SummarizeTorrent(FileInfo torrent)
-		{
+		async Task SummarizeTorrent(FileInfo torrent) {
 			var content = await File.ReadAllBytesAsync(torrent.FullName);
 			if (!BEnc.TryParseExpr(content, out var expr, out int read)
 					|| read != content.Length
-					|| expr == null)
-			{
+					|| expr == null) {
 				Console.WriteLine($"Something went wrong reading {torrent.FullName} at offset {read}");
 				return;
 			}
@@ -61,11 +54,9 @@ namespace IOU.Cli
 			Console.WriteLine($"Summary for '{fileInfo.Info.Name}'");
 			Console.WriteLine($"InfoHash: {Convert.ToHexString(infoHash)}");
 			var files = fileInfo.Info.Files;
-			if (files != null)
-			{
+			if (files != null) {
 				var maxNameLen = files.Select(f => string.Join('/', f.Path)).Max(name => name.Length);
-				foreach (var file in files)
-				{
+				foreach (var file in files) {
 					var path = string.Join('/', file.Path);
 					Console.WriteLine($"{path.PadRight(maxNameLen + 2)} {Utils.FormatBytesize(file.Length)}");
 				}
@@ -73,8 +64,7 @@ namespace IOU.Cli
 			Console.WriteLine($"Trackers:\n{string.Join("\n", fileInfo.AnnounceList.Select(t => string.Join(", ", t)))}");
 		}
 
-		async static Task<NodeId> CreateNodeIdFromPublicIpAsync()
-		{
+		async static Task<NodeId> CreateNodeIdFromPublicIpAsync() {
 			var ip = await AskPublicIpAddressAsync();
 
 			using var stream = new MemoryStream();
@@ -87,8 +77,7 @@ namespace IOU.Cli
 			return new NodeId(await sha.ComputeHashAsync(stream));
 		}
 
-		async static Task<IPAddress> AskPublicIpAddressAsync()
-		{
+		async static Task<IPAddress> AskPublicIpAddressAsync() {
 			var req = WebRequest.CreateHttp("https://api.ipify.org");
 
 			using var response = await req.GetResponseAsync();

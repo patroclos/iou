@@ -4,10 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace IOU
-{
-	public class BDict : BEnc<IReadOnlyList<KeyValuePair<BStr, BEnc>>>
-	{
+namespace IOU {
+	public class BDict : BEnc<IReadOnlyList<KeyValuePair<BStr, BEnc>>> {
 		public override BEncType Type => BEncType.BDict;
 
 		public override IReadOnlyList<KeyValuePair<BStr, BEnc>> Value { get; }
@@ -18,18 +16,15 @@ namespace IOU
 			).Value;
 
 		public BEnc? this[IEnumerable<BStr> keys] =>
-			keys.Aggregate((BEnc?) this, (o, k) => o != null && o is BDict d ? d[k] : default);
+			keys.Aggregate((BEnc?)this, (o, k) => o != null && o is BDict d ? d[k] : default);
 
-		public BDict(IReadOnlyList<KeyValuePair<BStr, BEnc>> values)
-		{
+		public BDict(IReadOnlyList<KeyValuePair<BStr, BEnc>> values) {
 			Value = values;
 		}
 
-		public override void Encode(BinaryWriter writer)
-		{
+		public override void Encode(BinaryWriter writer) {
 			writer.Write('d');
-			foreach (var pair in Value)
-			{
+			foreach (var pair in Value) {
 				pair.Key.Encode(writer);
 				pair.Value.Encode(writer);
 			}
@@ -37,8 +32,7 @@ namespace IOU
 			writer.Write('e');
 		}
 
-		public static bool TryParse(ReadOnlySpan<byte> buffer, out BDict? value, out int consumed)
-		{
+		public static bool TryParse(ReadOnlySpan<byte> buffer, out BDict? value, out int consumed) {
 			value = null;
 			consumed = 0;
 
@@ -51,8 +45,7 @@ namespace IOU
 			consumed++;
 
 			var pairs = new List<KeyValuePair<BStr, BEnc>>();
-			while (true)
-			{
+			while (true) {
 				if (!BStr.TryParse(buffer.Slice(consumed), out var str, out var bcK) || str == null)
 					break;
 				consumed += bcK;
@@ -69,12 +62,10 @@ namespace IOU
 			return true;
 		}
 
-		public override void WriteTo(IndentedTextWriter writer)
-		{
+		public override void WriteTo(IndentedTextWriter writer) {
 			writer.WriteLine($"Dict({Value.Count} items)");
 			writer.Indent++;
-			foreach (var kv in Value)
-			{
+			foreach (var kv in Value) {
 				writer.WriteLine("-----------------");
 				writer.Indent++;
 				writer.WriteLine("[K]");

@@ -1,23 +1,19 @@
 using System.Linq;
 
-namespace IOU
-{
-	public class TorrentFile
-	{
+namespace IOU {
+	public class TorrentFile {
 		public BInt Length { get; private set; }
 
 		public BStr[] Path { get; private set; }
 
-		public TorrentFile(BInt length, BStr[] path)
-		{
+		public TorrentFile(BInt length, BStr[] path) {
 			Length = length;
 			Path = path;
 		}
 
-		public static bool TryParseInfo(BEnc enc, out TorrentFile? file)
-		{
+		public static bool TryParseInfo(BEnc enc, out TorrentFile? file) {
 			file = default;
-			
+
 			if (!(enc is BDict d))
 				return false;
 			var len = d["length"];
@@ -37,13 +33,12 @@ namespace IOU
 			var elems = pl.Value.OfType<BStr>().ToArray();
 
 			file = new TorrentFile(lenI, elems);
-			
+
 			return true;
 		}
 
-		public override string ToString()
-		{
-			return $"{nameof(Length)}: {Length}, {nameof(Path)}: {string.Join("/", Path.Select(s=>s.Utf8String))}";
+		public override string ToString() {
+			return $"{nameof(Length)}: {Length}, {nameof(Path)}: {string.Join("/", Path.Select(s => s.Utf8String))}";
 		}
 	}
 }

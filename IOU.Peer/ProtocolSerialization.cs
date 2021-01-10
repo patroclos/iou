@@ -1,24 +1,19 @@
 using System;
 using System.Buffers;
-using System.IO;
 using System.Linq;
+
 using BinaryEncoding;
 
-namespace IOU.Peer
-{
-	public static class ProtocolSerialization
-	{
-		public struct ParsedMessage
-		{
+namespace IOU.Peer {
+	public static class ProtocolSerialization {
+		public struct ParsedMessage {
 			public IProtocolMessage Message { get; set; }
 			public SequencePosition Position { get; set; }
 		}
 
-		public static byte[] SerializeMessage(IProtocolMessage message)
-		{
+		public static byte[] SerializeMessage(IProtocolMessage message) {
 			var be = Binary.BigEndian;
-			switch (message)
-			{
+			switch (message) {
 				case ISelfSerialize selfSerialize:
 					return selfSerialize.ToByteArray();
 				case KeepAlive:
@@ -45,8 +40,7 @@ namespace IOU.Peer
 			}
 		}
 
-		public static ParsedMessage? TryParseMessage(ReadOnlySequence<byte> buf)
-		{
+		public static ParsedMessage? TryParseMessage(ReadOnlySequence<byte> buf) {
 			var be = Binary.BigEndian;
 
 			if (buf.Length < 4)
@@ -56,8 +50,7 @@ namespace IOU.Peer
 			var len = be.GetUInt32(buf.Slice(0, 4).ToArray());
 
 			if (len == 0)
-				return new ParsedMessage
-				{
+				return new ParsedMessage {
 					Message = new KeepAlive(),
 					Position = buf.GetPosition(off)
 				};
@@ -68,8 +61,7 @@ namespace IOU.Peer
 			var type = buf.Slice(off++, 1).FirstSpan[0];
 
 			IProtocolMessage? parsed = null;
-			switch (type)
-			{
+			switch (type) {
 				case 0:
 					parsed = new Choke();
 					break;
@@ -82,15 +74,13 @@ namespace IOU.Peer
 				case 3:
 					parsed = new NotInterested();
 					break;
-				case 4:
-					{
+				case 4: {
 						var idx = be.GetUInt32(buf.Slice(off, 4).ToArray());
 						off += 4;
 						parsed = new Have { PieceIndex = idx };
 						break;
 					}
-				case 5:
-					{
+				case 5: {
 						var bitfieldLen = (int)(len - 1);
 						var bits = buf.Slice(off, bitfieldLen).ToArray();
 						off += bitfieldLen;
@@ -110,8 +100,7 @@ namespace IOU.Peer
 			}
 
 			if (parsed != null)
-				return new ParsedMessage
-				{
+				return new ParsedMessage {
 					Message = parsed,
 					Position = buf.GetPosition(off)
 				};
